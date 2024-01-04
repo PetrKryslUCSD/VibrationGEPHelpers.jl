@@ -1,5 +1,7 @@
 module GEPHelpers
 
+using LinearAlgebra
+
 """
     pwr_largest(K, M)
 
