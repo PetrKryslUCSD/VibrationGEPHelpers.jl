@@ -2,3 +2,6 @@ name = "GEPHelpers"
 uuid = "3f428ce3-b273-4d47-9ed2-092cb711fea6"
 authors = ["Petr Krysl <pkrysl@ucsd.edu>"]
 version = "0.1.0"
+
+[deps]
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
