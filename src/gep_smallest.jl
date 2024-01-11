@@ -6,13 +6,13 @@ function __mass_orthogonalize!(v, M)
 end
 
 """
-    gep_smallest(K, M, neigvs; check_orthogonal = false,
+    gep_smallest(K, M, neigvs; orthogonalize = false,
         which=:SM, tol=0.0, maxiter=300, sigma=nothing, ritzvec=true, v0=zeros((0,))
         )
 
 
 """
-function gep_smallest(K, M, neigvs; check_orthogonal = false,
+function gep_smallest(K, M, neigvs; orthogonalize = false,
     which=:SM, tol=0.0, maxiter=300, sigma=nothing, ritzvec=true, v0=zeros((0,))
     )
 
@@ -22,7 +22,7 @@ function gep_smallest(K, M, neigvs; check_orthogonal = false,
 
     d, v, nconv = eigs(Symmetric(K), Symmetric(M); nev=neigvs, which=:SM, tol=tol, maxiter=maxiter, explicittransform=:none, check = 1) # maxiter = maxiter,
 
-    check_orthogonal && __mass_orthogonalize!(v, M)
+    orthogonalize && __mass_orthogonalize!(v, M)
 
     return d, v, nconv
 end
