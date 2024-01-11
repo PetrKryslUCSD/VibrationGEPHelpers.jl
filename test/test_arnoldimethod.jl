@@ -1,14 +1,15 @@
 let
 
+    omega_shift = 2 * pi * 0.1
+
     b = "unit_cube_modes-h20-n1=3"
 
     K, M = __load_pencil(b)
     fs = __load_frequencies(b)
     neigvs = length(fs)
 
-@show     rank(K)
-
-    d, v, nconv = gep_smallest(K, M, neigvs; method = :ArnoldiMethod)
+    d, v, nconv = gep_smallest(K + omega_shift^2 * M, M, neigvs; method = :ArnoldiMethod, orthogonalize = true, maxiter=500)
+    d .-= omega_shift^2
     @test nconv == neigvs
     fs1 = sqrt.(abs.(d)) ./ (2*pi)
     @test norm(fs1 - fs) / norm(fs) <= 1e-5
@@ -25,7 +26,8 @@ let
     fs = __load_frequencies(b)
     neigvs = length(fs)
 
-    d, v, nconv = gep_smallest(K, M, neigvs; method = :ArnoldiMethod)
+    d, v, nconv = gep_smallest(K + omega_shift^2 * M, M, neigvs; method = :ArnoldiMethod, orthogonalize = true)
+    d .-= omega_shift^2
     @test nconv == neigvs
     fs1 = sqrt.(abs.(d)) ./ (2*pi)
     @test norm(fs1 - fs) / norm(fs) <= 1e-5

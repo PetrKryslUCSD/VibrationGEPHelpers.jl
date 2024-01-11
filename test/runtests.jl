@@ -15,12 +15,12 @@ function __load_frequencies(b)
     DataDrop.retrieve_matrix(b, "/frequencies")
 end
 
-@time @testset "ArnoldiMethod" begin
-include("test_arnoldimethod.jl")
-end
-
 @time @testset "Arpack" begin
 include("test_arpack.jl")
+end
+
+@time @testset "ArnoldiMethod" begin
+include("test_arnoldimethod.jl")
 end
 
 true
