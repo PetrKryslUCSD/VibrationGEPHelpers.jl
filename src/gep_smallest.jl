@@ -58,11 +58,10 @@ function arnoldimethod_eigs(A, B; nev::Integer=6, ncv::Integer=max(20,2*nev+1), 
     ritzvec == true || error("Argument ritzvec not supported")
     explicittransform == :none || error("Argument explicittransform only supported as :none")
 
-    cholesky(A)
-
-    decomp, history = partialschur(construct_linear_map(A, B), nev=nev, tol=tol, restarts=100, which=LM())
+    decomp, history = partialschur(construct_linear_map(A, B), nev=nev, tol=tol, restarts=maxiter, which=LM())
     d_inv, v = partialeigen(decomp)
     d = 1 ./ d_inv
+    d = real.(d)
     ix = sortperm(real.(d))
 
     return d[ix], v[:, ix], history.nconverged
