@@ -1,2 +1,3 @@
 # GEPHelpers.jl
-Generalized Eigenvalue Problem helper functions
+
+Generalized Eigenvalue Problem helper functions.
