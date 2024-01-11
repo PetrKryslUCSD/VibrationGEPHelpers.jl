@@ -24,6 +24,14 @@ function gep_smallest(K, M, neigvs; method = :Arpack, orthogonalize = false,
         d, v, nconv = eigs(Symmetric(K), Symmetric(M); nev=neigvs, which=:SM, tol=tol, maxiter=maxiter, explicittransform=:none, check = 1)
     elseif method == :ArnoldiMethod
         d, v, nconv = arnoldimethod_eigs(Symmetric(K), Symmetric(M); nev=neigvs, which=:SM, tol=tol, maxiter=maxiter, explicittransform=:none, check = 1)
+    elseif method == :KrylovKit
+        d, vv, convinfo = geneigsolve((Symmetric(K), Symmetric(M)), neigvs, :SR; maxiter=maxiter, issymmetric = true, ishermitian = true, isposdef = true)
+        v = zeros(size(K, 1), length(d))
+        for j in 1:length(d)
+            v[:, j] .= vv[j]
+        end
+        @show convinfo
+        nconv = convinfo.converged
     else
         error("Unknown method: $(method)")
     end
