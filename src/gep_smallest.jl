@@ -85,5 +85,5 @@ end
 
 function subsit_eigs(K, M; nev::Integer=6, ncv::Integer=max(20,2*nev+1), which=:SM, tol=0.0, maxiter::Integer=300)
     which == :SM || error("Argument which: The only recognized which is :SM")
-    d, v, nconv = SubSIt.ssit(K, M; nev=nev, maxiter=maxiter)
+    d, v, nconv = SubSIt.ssit(K, M; nev=nev, maxiter=maxiter, tol = tol)
 end

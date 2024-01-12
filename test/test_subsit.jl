@@ -8,7 +8,7 @@ let
     fs = __load_frequencies(b)
     neigvs = length(fs)
 
-    d, v, nconv = gep_smallest(K + omega_shift^2 * M, M, neigvs; method = :SubSIt, tol = 1e-5)
+    d, v, nconv = gep_smallest(K + omega_shift^2 * M, M, neigvs; method = :SubSIt, tol = 1e-7)
     d .-= omega_shift^2
     @test nconv >= neigvs
     fs1 = sqrt.(abs.(d)) ./ (2*pi)
@@ -26,7 +26,7 @@ let
     fs = __load_frequencies(b)
     neigvs = length(fs)
 
-    d, v, nconv = gep_smallest(K + omega_shift^2 * M, M, neigvs; method = :SubSIt, tol = 1e-5)
+    d, v, nconv = gep_smallest(K + omega_shift^2 * M, M, neigvs; method = :SubSIt, tol = 1e-7)
     d .-= omega_shift^2
     @test nconv >= neigvs
     fs1 = sqrt.(abs.(d)) ./ (2*pi)
