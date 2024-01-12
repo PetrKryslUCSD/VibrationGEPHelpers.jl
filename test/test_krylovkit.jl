@@ -3,7 +3,7 @@ let
     omega_shift = 2 * pi * 0.1
 
     b = "unit_cube_modes-h20-n1=3"
-
+    @info "Input $b"
     K, M = __load_pencil(b)
     fs = __load_frequencies(b)
     neigvs = length(fs)
@@ -21,7 +21,7 @@ let
 
 
     b = "unit_cube_modes-h8-n1=3"
-
+    @info "Input $b"
     K, M = __load_pencil(b)
     fs = __load_frequencies(b)
     neigvs = length(fs)
