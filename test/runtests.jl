@@ -15,6 +15,10 @@ function __load_frequencies(b)
     DataDrop.retrieve_matrix(b, "/frequencies")
 end
 
+@time @testset "SubSIt" begin
+include("test_subsit.jl")
+end
+
 @time @testset "KrylovKit" begin
 include("test_krylovkit.jl")
 end
