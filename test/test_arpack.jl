@@ -41,9 +41,6 @@ let
 
     b = "unit_cube_tet-16"
     @info "Input $b"
-    if !isfile(joinpath(dirname(@__FILE__()), b * ".h5"))
-        success(run(`unzip -qq -d $(dirname(@__FILE__())) $(joinpath(dirname(@__FILE__()), b * ".zip"))`; wait = false))
-    end
     K, M = __load_pencil(b)
     fs = __load_frequencies(b)
     neigvs = length(fs)

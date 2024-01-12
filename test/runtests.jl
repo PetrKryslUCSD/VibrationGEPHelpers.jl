@@ -15,6 +15,11 @@ function __load_frequencies(b)
     DataDrop.retrieve_matrix(b, "/frequencies")
 end
 
+b = "unit_cube_tet-16"
+if !isfile(joinpath(dirname(@__FILE__()), b * ".h5"))
+    success(run(`unzip -qq -d $(dirname(@__FILE__())) $(joinpath(dirname(@__FILE__()), "matrix_files.zip"))`; wait = false))
+end
+
 @time @testset "Arpack" begin
 include("test_arpack.jl")
 end
