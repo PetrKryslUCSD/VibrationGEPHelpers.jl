@@ -143,18 +143,40 @@ function __krylovkit_eigs(
     maxiter::Integer = 300,
 )
     which == :SR || error("Argument which: The only recognized which is :SR")
-    d, vv, convinfo = geneigsolve(
-        (Symmetric(K), Symmetric(M)),
+
+    z = (zero(eltype(M)))
+    # Mfactor = cholesky(Symmetric(M))
+    # d, vv, convinfo = eigsolve(
+    #     x -> Mfactor \ (K * x),
+    #     rand(typeof(z), size(K, 1)),
+    #     nev,
+    #     :SR;
+    #     maxiter = maxiter,
+    #     krylovdim = 2 * nev
+    # )
+    Kfactor = cholesky(Symmetric(K))
+    di, vv, convinfo = eigsolve(
+        x -> Kfactor \ (M * x),
+        rand(typeof(z), size(K, 1)),
         nev,
-        :SR;
+        :LR;
         maxiter = maxiter,
-        issymmetric = true,
-        ishermitian = true,
-        isposdef = true,
+        krylovdim = 2 * nev
     )
-    v = zeros(size(K, 1), length(d))
-    for j = 1:length(d)
-        v[:, j] .= vv[j]
+    d = 1 ./ di
+    # d, vv, convinfo = geneigsolve(
+    #         (Symmetric(K), Symmetric(M)),
+    #         nev,
+    #         :SR;
+    #         maxiter = maxiter,
+    #         issymmetric = true,
+    #         ishermitian = true,
+    #         isposdef = true,
+    #     )
+    @show d = d[1:nev]
+    v = zeros(size(K, 1), nev)
+    for j = 1:nev
+        v[:, j] .= real.(vv[j])
     end
     @show convinfo
     nconv = convinfo.converged
