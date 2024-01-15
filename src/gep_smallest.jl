@@ -22,11 +22,6 @@ function gep_smallest(
     maxiter = 300,
     v0 = fill(zero(eltype(K)), 0, 0),
 )
-
-    @assert which == :SM
-    @assert sigma == nothing
-    @assert ritzvec == true
-
     if method == :Arpack
         d, v, nconv = eigs(
             Symmetric(K),
@@ -43,18 +38,14 @@ function gep_smallest(
             Symmetric(K),
             Symmetric(M);
             nev = neigvs,
-            which = :SM,
             tol = tol,
             maxiter = maxiter,
-            explicittransform = :none,
-            check = 1,
         )
     elseif method == :KrylovKit
         d, v, nconv = __krylovkit_eigs(
             Symmetric(K),
             Symmetric(M);
             nev = neigvs,
-            which = :SR,
             tol = tol,
             maxiter = maxiter,
         )
@@ -63,7 +54,6 @@ function gep_smallest(
             Symmetric(K),
             Symmetric(M);
             nev = neigvs,
-            which = :SM,
             tol = tol,
             maxiter = maxiter,
             X = v0,
@@ -101,21 +91,11 @@ function __arnoldimethod_eigs(
     M;
     nev::Integer = 6,
     ncv::Integer = max(20, 2 * nev + 1),
-    which = :SM,
     tol = 0.0,
     maxiter::Integer = 300,
-    sigma = nothing,
     v0::Vector = zeros(eltype(K), (0,)),
-    ritzvec::Bool = true,
-    explicittransform::Symbol = :auto,
     check::Integer = 0,
 )
-    which == :SM || error("Argument which: The only recognized which is :SM")
-    sigma == nothing || error("Argument sigma not supported")
-    ritzvec == true || error("Argument ritzvec not supported")
-    explicittransform == :none ||
-        error("Argument explicittransform only supported as :none")
-
     decomp, history = partialschur(
         construct_linear_map(K, M),
         nev = nev,
@@ -126,7 +106,7 @@ function __arnoldimethod_eigs(
         maxdim = max(nev + 8, 2 * nev)
     )
     d_inv, v = partialeigen(decomp)
-
+    # Invert the eigenvalues
     d = 1 ./ d_inv
     d = real.(d)
     # Order by absolute value
@@ -156,11 +136,9 @@ function __krylovkit_eigs(
     M;
     nev::Integer = 6,
     ncv::Integer = max(20, 2 * nev + 1),
-    which = :SR,
     tol = 0.0,
     maxiter::Integer = 300,
 )
-    which == :SR || error("Argument which: The only recognized which is :SR")
     _nev = nev + 6
     # Employ invert strategy to accelerate convergence
     z = (zero(eltype(M)))
@@ -207,11 +185,10 @@ function __subsit_eigs(
     M;
     nev::Integer = 6,
     ncv::Integer = max(20, 2 * nev + 1),
-    which = :SM,
     tol = 0.0,
     maxiter::Integer = 300,
+    X = fill(zero(eltype(K)), 0, 0),
 )
-    which == :SM || error("Argument which: The only recognized which is :SM")
     d, v, nconv = SubSIt.ssit(K, M; nev = nev, maxiter = maxiter, tol = tol, verbose = true)
     return d, v, nconv
 end
