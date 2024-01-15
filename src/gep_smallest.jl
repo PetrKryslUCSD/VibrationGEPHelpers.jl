@@ -1,6 +1,6 @@
 function __mass_orthogonalize!(v, M)
     for i in axes(v, 2)
-        v[:, i] /= sqrt(dot(v[:, i], M * v[:, i]))
+        v[:, i] ./= sqrt(dot(view(v, :, i), M * view(v, :, i)))
     end
     return v
 end
@@ -18,12 +18,9 @@ function gep_smallest(
     neigvs;
     method = :Arpack,
     orthogonalize = false,
-    which = :SM,
     tol = 0.0,
     maxiter = 300,
-    sigma = nothing,
-    ritzvec = true,
-    v0 = zeros((0,)),
+    v0 = fill(zero(eltype(K)), 0, 0),
 )
 
     @assert which == :SM
@@ -69,6 +66,7 @@ function gep_smallest(
             which = :SM,
             tol = tol,
             maxiter = maxiter,
+            X = v0,
         )
     else
         error("Unknown method: $(method)")
@@ -124,13 +122,33 @@ function __arnoldimethod_eigs(
         tol = tol,
         restarts = maxiter,
         which = LM(),
+        mindim  = nev + 6,
+        maxdim = max(nev + 8, 2 * nev)
     )
     d_inv, v = partialeigen(decomp)
+
     d = 1 ./ d_inv
     d = real.(d)
-    ix = sortperm(real.(d))
-
-    return d[ix], v[:, ix], history.nconverged
+    # Order by absolute value
+    ix = sortperm(d)
+    d, v = d[ix], v[:, ix]
+    @show d
+    # Compute a set of M-orthogonal vectors
+    Mhat = v' * M * v
+    R = eigvecs(Mhat)
+    __mass_orthogonalize!(R, Mhat)
+    v = real.(v * R)
+    # Recalculate the eigenvalues so that the order of the eigenvalues and
+    # eigenvectors agrees
+    d = zeros(size(d))
+    for j in 1:nev
+        d[j] = view(v, :, j)'  * (K * view(v, :, j))
+    end
+    @show sort(d)
+    # Sort  the angular frequencies by magnitude.  Make sure all imaginary parts
+    # of the eigenvalues are removed.
+    ix = sortperm(d)
+    return d[ix[1:nev]], v[:, ix[1:nev]], history.nconverged
 end
 
 function __krylovkit_eigs(
@@ -143,44 +161,45 @@ function __krylovkit_eigs(
     maxiter::Integer = 300,
 )
     which == :SR || error("Argument which: The only recognized which is :SR")
-
+    _nev = nev + 6
+    # Employ invert strategy to accelerate convergence
     z = (zero(eltype(M)))
-    # Mfactor = cholesky(Symmetric(M))
-    # d, vv, convinfo = eigsolve(
-    #     x -> Mfactor \ (K * x),
-    #     rand(typeof(z), size(K, 1)),
-    #     nev,
-    #     :SR;
-    #     maxiter = maxiter,
-    #     krylovdim = 2 * nev
-    # )
     Kfactor = cholesky(Symmetric(K))
     di, vv, convinfo = eigsolve(
         x -> Kfactor \ (M * x),
         rand(typeof(z), size(K, 1)),
-        nev,
+        _nev,
         :LR;
         maxiter = maxiter,
-        krylovdim = 2 * nev
+        krylovdim = 2 * _nev + 6
     )
-    d = 1 ./ di
-    # d, vv, convinfo = geneigsolve(
-    #         (Symmetric(K), Symmetric(M)),
-    #         nev,
-    #         :SR;
-    #         maxiter = maxiter,
-    #         issymmetric = true,
-    #         ishermitian = true,
-    #         isposdef = true,
-    #     )
-    @show d = d[1:nev]
-    v = zeros(size(K, 1), nev)
-    for j = 1:nev
+    # Eigen values of the original problem
+    d = real.(1 ./ di)
+    # Convert a vector of vectors to a matrix
+    v = zeros(size(K, 1), length(d))
+    for j in 1:length(vv)
         v[:, j] .= real.(vv[j])
     end
-    @show convinfo
-    nconv = convinfo.converged
-    d, v, nconv
+    # Order by absolute value
+    ix = sortperm(d)
+    d, v = d[ix], v[:, ix]
+    @show d
+    # Compute a set of M-orthogonal vectors
+    Mhat = v' * M * v
+    R = eigvecs(Mhat)
+    __mass_orthogonalize!(R, Mhat)
+    v = real.(v * R)
+    # Recalculate the eigenvalues so that the order of the eigenvalues and
+    # eigenvectors agrees
+    d = zeros(size(v, 2))
+    for j in 1:size(v, 2)
+        d[j] = view(v, :, j)'  * (K * view(v, :, j))
+    end
+    @show d
+    # Sort  the angular frequencies by magnitude. Carve out only the sorted
+    # eigenvalues we are interested in.
+    ix = sortperm(d)
+    return d[ix[1:nev]], v[:, ix[1:nev]], convinfo.converged
 end
 
 function __subsit_eigs(
@@ -193,5 +212,6 @@ function __subsit_eigs(
     maxiter::Integer = 300,
 )
     which == :SM || error("Argument which: The only recognized which is :SM")
-    d, v, nconv = SubSIt.ssit(K, M; nev = nev, maxiter = maxiter, tol = tol)
+    d, v, nconv = SubSIt.ssit(K, M; nev = nev, maxiter = maxiter, tol = tol, verbose = true)
+    return d, v, nconv
 end
