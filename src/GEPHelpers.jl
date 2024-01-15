@@ -1,6 +1,7 @@
 module GEPHelpers
 
 using LinearAlgebra
+
 using Arpack
 using ArnoldiMethod, LinearAlgebra, LinearMaps
 using KrylovKit
