@@ -96,6 +96,7 @@ function __arnoldimethod_eigs(
     v0::Vector = zeros(eltype(K), (0,)),
     check::Integer = 0,
 )
+    #=
     decomp, history = partialschur(
         construct_linear_map(K, M),
         nev = nev,
@@ -106,6 +107,19 @@ function __arnoldimethod_eigs(
         maxdim = max(nev + 8, 2 * nev)
     )
     d_inv, v = partialeigen(decomp)
+    =#
+Kfactor = cholesky(Symmetric(K))
+PtL = Kfactor.PtL
+decomp, history = partialschur(
+    x -> PtL \ (M * (PtL' \ x)),
+    nev = nev,
+    tol = tol,
+    restarts = maxiter,
+    which = LM(),
+    mindim  = nev + 6,
+    maxdim = max(nev + 8, 2 * nev)
+)
+d_inv, v = partialeigen(decomp)
     # Invert the eigenvalues
     d = 1 ./ d_inv
     d = real.(d)
@@ -142,6 +156,7 @@ function __krylovkit_eigs(
     _nev = nev + 6
     # Employ invert strategy to accelerate convergence
     z = (zero(eltype(M)))
+#=
     Kfactor = cholesky(Symmetric(K))
     di, vv, convinfo = eigsolve(
         x -> Kfactor \ (M * x),
@@ -153,11 +168,44 @@ function __krylovkit_eigs(
     )
     # Eigen values of the original problem
     d = real.(1 ./ di)
+=#
+
+    Kfactor = cholesky(Symmetric(K))
+    PtL = Kfactor.PtL
+    di, ww, convinfo = eigsolve(
+            x -> PtL \ (M * (PtL' \ x)),
+            rand(typeof(z), size(K, 1)),
+            _nev,
+            :LR;
+            maxiter = maxiter,
+            krylovdim = 2 * _nev + 6,
+            ishermitian = true
+        )
+    vv = map(w->PtL'\w, ww)
+    # Eigen values of the original problem
+    d = 1 ./ real.(di)
+    #=
+    Mfactor = cholesky(Symmetric(M))
+    PtL = Mfactor.PtL
+    d, ww, convinfo = eigsolve(
+            x -> PtL \ (K * (PtL' \ x)),
+            rand(typeof(z), size(K, 1)),
+            _nev,
+            :SR;
+            maxiter = maxiter,
+            krylovdim = 2 * _nev + 6,
+            ishermitian = true
+        )
+    vv = map(w->PtL'\w, ww)
+        =#
+    # @show convinfo
     # Convert a vector of vectors to a matrix
     v = zeros(size(K, 1), length(d))
     for j in 1:length(vv)
         v[:, j] .= real.(vv[j])
     end
+    __mass_orthogonalize!(v, M)
+    #=
     # Order by absolute value
     ix = sortperm(d)
     d, v = d[ix], v[:, ix]
@@ -173,7 +221,7 @@ function __krylovkit_eigs(
     for j in 1:size(v, 2)
         d[j] = view(v, :, j)'  * (K * view(v, :, j))
     end
-    @show d
+    =#
     # Sort  the angular frequencies by magnitude. Carve out only the sorted
     # eigenvalues we are interested in.
     ix = sortperm(d)
@@ -189,6 +237,6 @@ function __subsit_eigs(
     maxiter::Integer = 300,
     X = fill(zero(eltype(K)), 0, 0),
 )
-    d, v, nconv = SubSIt.ssit(K, M; nev = nev, maxiter = maxiter, tol = tol, verbose = true)
+    d, v, nconv = SubSIt.ssit(K, M; nev = nev, maxiter = maxiter, tol = tol, verbose = false)
     return d, v, nconv
 end
