@@ -4,7 +4,7 @@ using DataDrop
 using SparseArrays
 using Statistics
 using LinearAlgebra
-using GEPHelpers: gep_smallest, check_M_orthogonality, check_K_orthogonality
+using VibrationGEPHelpers: gep_smallest, check_M_orthogonality, check_K_orthogonality
 
 function __load_pencil(b)
     K = DataDrop.retrieve_matrix(b, "/K")
