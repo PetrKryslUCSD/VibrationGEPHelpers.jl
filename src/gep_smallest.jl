@@ -74,10 +74,14 @@ struct ShiftAndInvert{TA,TB,TT}
     temp::TT
 end
 
-function (M::ShiftAndInvert)(y, x)
-    mul!(M.temp, M.B, x)
-    # ldiv!(y, M.A_factorization, M.temp)
-    y .= M.A_factorization \ M.temp
+function (SI::ShiftAndInvert)(y, x)
+    # mul!(SI.temp, SI.B, x)
+    # y .= SI.A_factorization \ SI.temp
+
+    # x -> PtL \ (B * (PtL' \ x)),
+    y .= SI.A_factorization.PtL' \ x
+    mul!(SI.temp, SI.B, y)
+    y .= SI.A_factorization.PtL \ SI.temp
 end
 
 function construct_linear_map(A, B)
@@ -96,7 +100,10 @@ function __arnoldimethod_eigs(
     v0::Vector = zeros(eltype(K), (0,)),
     check::Integer = 0,
 )
-    #=
+    a = ShiftAndInvert(cholesky(K), M, Vector{eltype(K)}(undef, size(K, 1)))
+    x = rand(size(K,1))
+    y = rand(size(K,1))
+    @show a(y, x)
     decomp, history = partialschur(
         construct_linear_map(K, M),
         nev = nev,
@@ -107,19 +114,6 @@ function __arnoldimethod_eigs(
         maxdim = max(nev + 8, 2 * nev)
     )
     d_inv, v = partialeigen(decomp)
-    =#
-Kfactor = cholesky(Symmetric(K))
-PtL = Kfactor.PtL
-decomp, history = partialschur(
-    x -> PtL \ (M * (PtL' \ x)),
-    nev = nev,
-    tol = tol,
-    restarts = maxiter,
-    which = LM(),
-    mindim  = nev + 6,
-    maxdim = max(nev + 8, 2 * nev)
-)
-d_inv, v = partialeigen(decomp)
     # Invert the eigenvalues
     d = 1 ./ d_inv
     d = real.(d)
@@ -154,22 +148,8 @@ function __krylovkit_eigs(
     maxiter::Integer = 300,
 )
     _nev = nev + 6
-    # Employ invert strategy to accelerate convergence
     z = (zero(eltype(M)))
-#=
-    Kfactor = cholesky(Symmetric(K))
-    di, vv, convinfo = eigsolve(
-        x -> Kfactor \ (M * x),
-        rand(typeof(z), size(K, 1)),
-        _nev,
-        :LR;
-        maxiter = maxiter,
-        krylovdim = 2 * _nev + 6
-    )
-    # Eigen values of the original problem
-    d = real.(1 ./ di)
-=#
-
+    # Employ invert strategy to accelerate convergence
     Kfactor = cholesky(Symmetric(K))
     PtL = Kfactor.PtL
     di, ww, convinfo = eigsolve(
@@ -184,44 +164,12 @@ function __krylovkit_eigs(
     vv = map(w->PtL'\w, ww)
     # Eigen values of the original problem
     d = 1 ./ real.(di)
-    #=
-    Mfactor = cholesky(Symmetric(M))
-    PtL = Mfactor.PtL
-    d, ww, convinfo = eigsolve(
-            x -> PtL \ (K * (PtL' \ x)),
-            rand(typeof(z), size(K, 1)),
-            _nev,
-            :SR;
-            maxiter = maxiter,
-            krylovdim = 2 * _nev + 6,
-            ishermitian = true
-        )
-    vv = map(w->PtL'\w, ww)
-        =#
-    # @show convinfo
     # Convert a vector of vectors to a matrix
     v = zeros(size(K, 1), length(d))
     for j in 1:length(vv)
         v[:, j] .= real.(vv[j])
     end
     __mass_orthogonalize!(v, M)
-    #=
-    # Order by absolute value
-    ix = sortperm(d)
-    d, v = d[ix], v[:, ix]
-    @show d
-    # Compute a set of M-orthogonal vectors
-    Mhat = v' * M * v
-    R = eigvecs(Mhat)
-    __mass_orthogonalize!(R, Mhat)
-    v = real.(v * R)
-    # Recalculate the eigenvalues so that the order of the eigenvalues and
-    # eigenvectors agrees
-    d = zeros(size(v, 2))
-    for j in 1:size(v, 2)
-        d[j] = view(v, :, j)'  * (K * view(v, :, j))
-    end
-    =#
     # Sort  the angular frequencies by magnitude. Carve out only the sorted
     # eigenvalues we are interested in.
     ix = sortperm(d)
