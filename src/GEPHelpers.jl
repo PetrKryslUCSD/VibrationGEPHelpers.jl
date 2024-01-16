@@ -1,6 +1,7 @@
 module GEPHelpers
 
 using LinearAlgebra
+using SparseArrays
 
 using Arpack
 using ArnoldiMethod, LinearAlgebra, LinearMaps
