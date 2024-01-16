@@ -86,7 +86,8 @@ end
 struct ShiftAndInvert{TA,TB,TT}
     A_factorization::TA
     B::TB
-    temp::TT
+    temp1::TT
+    temp2::TT
 end
 
 function (SI::ShiftAndInvert)(y, x)
@@ -94,13 +95,14 @@ function (SI::ShiftAndInvert)(y, x)
     # y .= SI.A_factorization \ SI.temp
 
     # x -> PtL \ (B * (PtL' \ x)),
-    y .= SI.A_factorization.PtL' \ x
-    mul!(SI.temp, SI.B, y)
-    y .= SI.A_factorization.PtL \ SI.temp
+    SI.temp1 .= x
+    SI.temp2 .= SI.A_factorization.PtL' \ SI.temp1
+    mul!(SI.temp1, SI.B, SI.temp2)
+    y .= (SI.A_factorization.PtL \ SI.temp1)
 end
 
 function construct_linear_map(A, B)
-    a = ShiftAndInvert(cholesky(A), B, Vector{eltype(A)}(undef, size(A, 1)))
+    a = ShiftAndInvert(cholesky(A), B, Vector{eltype(A)}(undef, size(A, 1)), Vector{eltype(A)}(undef, size(A, 1)))
     LinearMap{eltype(A)}(a, size(A, 1), ismutating = true)
 end
 
@@ -115,39 +117,25 @@ function __arnoldimethod_eigs(
     v0::Vector = zeros(eltype(K), (0,)),
     check::Integer = 0,
 )
-    a = ShiftAndInvert(cholesky(K), M, Vector{eltype(K)}(undef, size(K, 1)))
-    x = rand(size(K,1))
-    y = rand(size(K,1))
-    @show a(y, x)
+    si = ShiftAndInvert(cholesky(K), M, Vector{eltype(K)}(undef, size(K, 1)), Vector{eltype(K)}(undef, size(K, 1)))
+    m = LinearMap{eltype(K)}(si, size(K, 1), ismutating = true)
     decomp, history = partialschur(
-        construct_linear_map(K, M),
+        m,
         nev = nev,
-        tol = tol,
+        tol = (tol == 0 ? sqrt(1.0) : tol),
         restarts = maxiter,
         which = LM(),
         mindim  = nev + 6,
         maxdim = max(nev + 8, 2 * nev)
     )
+    @show history
     d_inv, v = partialeigen(decomp)
-    # Invert the eigenvalues
-    d = 1 ./ d_inv
-    d = real.(d)
-    # Order by absolute value
-    ix = sortperm(d)
-    d, v = d[ix], v[:, ix]
+    # Recover the solution of the original problem
+    d = 1 ./ real.(d_inv)
     @show d
-    # Compute a set of M-orthogonal vectors
-    Mhat = v' * M * v
-    R = eigvecs(Mhat)
-    __mass_orthogonalize!(R, Mhat)
-    v = real.(v * R)
-    # Recalculate the eigenvalues so that the order of the eigenvalues and
-    # eigenvectors agrees
-    d = zeros(size(d))
-    for j in 1:nev
-        d[j] = view(v, :, j)'  * (K * view(v, :, j))
-    end
-    @show sort(d)
+    v = si.A_factorization.PtL'\v
+    # Make vectors mass orthogonal
+    mass_orthogonalize!(v, M)
     # Sort  the angular frequencies by magnitude.  Make sure all imaginary parts
     # of the eigenvalues are removed.
     ix = sortperm(d)
