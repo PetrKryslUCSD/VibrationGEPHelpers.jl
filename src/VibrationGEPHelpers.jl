@@ -1,4 +1,4 @@
-module GEPHelpers
+module VibrationGEPHelpers
 
 using LinearAlgebra
 using SparseArrays
@@ -13,4 +13,4 @@ include("gep_smallest.jl")
 include("check.jl")
 
 
-end # module GEPHelpers
+end # module VibrationGEPHelpers
