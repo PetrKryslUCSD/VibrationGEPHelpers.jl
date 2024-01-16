@@ -1,4 +1,9 @@
-function __mass_orthogonalize!(v, M)
+"""
+    mass_orthogonalize!(v, M)
+
+Orthogonalize the columns of the matrix `v` with respect to the mass matrix `M`.
+"""
+function mass_orthogonalize!(v, M)
     for i in axes(v, 2)
         v[:, i] ./= sqrt(dot(view(v, :, i), M * view(v, :, i)))
     end
@@ -6,22 +11,34 @@ function __mass_orthogonalize!(v, M)
 end
 
 """
-    gep_smallest(K, M, neigvs; orthogonalize = false,
-        which=:SM, tol=0.0, maxiter=300, sigma=nothing, ritzvec=true, v0=zeros((0,))
-        )
+    gep_smallest(
+        K,
+        M,
+        neigvs;
+        method = :Arpack,
+        tol = 0.0,
+        maxiter = 300,
+        v0 = fill(zero(eltype(K)), 0, 0),
+    )
 
+Solve for the smallest natural frequencies.
 
+# Return
+
+- `d, v, nconv`: vector of squares of angular frequencies `d`, matrix of
+  eigenvectors as columns `v`, how many eigenvalues converged `nconv`.
 """
 function gep_smallest(
     K,
     M,
     neigvs;
     method = :Arpack,
-    orthogonalize = false,
     tol = 0.0,
     maxiter = 300,
     v0 = fill(zero(eltype(K)), 0, 0),
 )
+    method in [:KrylovKit,:Arpack, :SubSIt, :ArnoldiMethod,] || error("Unknown method $(method)")
+
     if method == :Arpack
         d, v, nconv = eigs(
             Symmetric(K),
@@ -61,8 +78,6 @@ function gep_smallest(
     else
         error("Unknown method: $(method)")
     end
-
-    orthogonalize && __mass_orthogonalize!(v, M)
 
     return d, v, nconv
 end
@@ -169,7 +184,7 @@ function __krylovkit_eigs(
     for j in 1:length(vv)
         v[:, j] .= real.(vv[j])
     end
-    __mass_orthogonalize!(v, M)
+    mass_orthogonalize!(v, M)
     # Sort  the angular frequencies by magnitude. Carve out only the sorted
     # eigenvalues we are interested in.
     ix = sortperm(d)
