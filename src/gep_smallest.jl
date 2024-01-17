@@ -115,14 +115,14 @@ function __arnoldimethod_eigs(
     tol = 0.0,
     maxiter::Integer = 300,
     v0::Vector = zeros(eltype(K), (0,)),
-    check::Integer = 0,
 )
+    tol = (tol == 0 ? sqrt(eps(1.0)) : tol)
     si = ShiftAndInvert(cholesky(K), M, Vector{eltype(K)}(undef, size(K, 1)), Vector{eltype(K)}(undef, size(K, 1)))
     m = LinearMap{eltype(K)}(si, size(K, 1), ismutating = true)
     decomp, history = partialschur(
         m,
         nev = nev,
-        tol = (tol == 0 ? sqrt(1.0) : tol),
+        tol = tol,
         restarts = maxiter,
         which = LM(),
         mindim  = nev + 6,
