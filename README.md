@@ -15,7 +15,10 @@ symmetric positive definite mass matrix, omega is the angular velocity.
 ```
 d, v, nconv = gep_smallest(K + omega_shift^2 * M, M, neigvs; method = :Arpack)
 ```
-The solution is useful in constructing modal expansions in solid dynamics.
+
+The solution is useful in constructing modal expansions in solid dynamics. It is
+possible to select the method (package) to use, `:KrylovKit`, `:Arpack`, and
+`:SubSIt` are currently available.
 
 - Solve the vibration GEP for the largest eigenvalue:
 ```
