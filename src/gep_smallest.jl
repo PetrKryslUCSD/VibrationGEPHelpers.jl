@@ -40,7 +40,7 @@ function gep_smallest(
     method in [:KrylovKit,:Arpack, :SubSIt, :ArnoldiMethod,] || error("Unknown method $(method)")
 
     if method == :Arpack
-        d, v, nconv = eigs(
+        d, v, nconv = Arpack.eigs(
             Symmetric(K),
             Symmetric(M);
             nev = neigvs,
@@ -169,7 +169,7 @@ function __krylovkit_eigs(
     d = 1 ./ real.(di)
     # Convert a vector of vectors to a matrix
     v = zeros(size(K, 1), length(d))
-    for j in 1:length(vv)
+    for j in eachindex(vv)
         v[:, j] .= real.(vv[j])
     end
     mass_orthogonalize!(v, M)

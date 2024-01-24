@@ -13,7 +13,7 @@ function check_M_orthogonality(v, M)
     max_vMv_diag_error = 0.0
     max_vMv_offdiag_error = 0.0
     Mred = v' * M * v
-    for i = 1:size(Mred, 1), j = i:size(Mred, 2)
+    for i = axes(Mred, 1), j = i:size(Mred, 2)
         p = (Mred[i, j] + Mred[j, i]) / 2
         if i == j
             max_vMv_diag_error = max(max_vMv_diag_error, abs(p - 1))
@@ -40,7 +40,7 @@ function check_K_orthogonality(d, v, K)
     max_vKv_diag_error = 0.0
     max_vKv_offdiag_error = 0.0
     Kred = v' * K * v
-    for i = 1:length(d), j = i:length(d)
+    for i = eachindex(d), j = i:length(d)
         p = (Kred[i, j] + Kred[j, i]) / 2
         if i == j
             max_vKv_diag_error = max(max_vKv_diag_error, abs(p - d[i]))
