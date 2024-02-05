@@ -40,7 +40,7 @@ function gep_smallest(
     method in [:KrylovKit,:Arpack, :SubSIt, :ArnoldiMethod,] || error("Unknown method $(method)")
 
     if method == :Arpack
-        d, v, nconv = eigs(
+        d, v, nconv = Arpack.eigs(
             Symmetric(K),
             Symmetric(M);
             nev = neigvs,
