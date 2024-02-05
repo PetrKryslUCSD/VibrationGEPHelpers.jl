@@ -24,3 +24,6 @@ docs/site/
 Manifest.toml
 
 *.sublime-workspace
+
+# Ignore meshes
+*.h5
