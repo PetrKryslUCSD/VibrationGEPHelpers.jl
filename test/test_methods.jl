@@ -48,7 +48,7 @@ let
 
     omega_shift = 2 * pi * 0.1
 
-    for m in [:ArnoldiMethod, ]#
+    for m in [:ArnoldiMethod,  ]#
         @info "Method $(m)"
 
 
