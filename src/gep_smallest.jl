@@ -91,10 +91,6 @@ struct ShiftAndInvert{TA,TB,TT}
 end
 
 function (SI::ShiftAndInvert)(y, x)
-    # mul!(SI.temp, SI.B, x)
-    # y .= SI.A_factorization \ SI.temp
-
-    # x -> PtL \ (B * (PtL' \ x)),
     SI.temp1 .= x
     SI.temp2 .= SI.A_factorization.PtL' \ SI.temp1
     mul!(SI.temp1, SI.B, SI.temp2)
@@ -105,7 +101,6 @@ function construct_linear_map(A, B)
     a = ShiftAndInvert(cholesky(A), B, Vector{eltype(A)}(undef, size(A, 1)), Vector{eltype(A)}(undef, size(A, 1)))
     LinearMap{eltype(A)}(a, size(A, 1), ismutating = true)
 end
-
 
 function __arnoldimethod_eigs(
     K,
@@ -126,20 +121,21 @@ function __arnoldimethod_eigs(
         restarts = maxiter,
         which = LM(),
         mindim  = nev + 6,
-        maxdim = max(nev + 8, 2 * nev)
+        # maxdim = max(nev + 8, 2 * nev, 40)
+        maxdim = min(max(40, 2 * nev), size(K,1))
     )
     @show history
     d_inv, v = partialeigen(decomp)
     # Recover the solution of the original problem
     d = 1 ./ real.(d_inv)
-    @show d
-    v = si.A_factorization.PtL'\v
-    # Make vectors mass orthogonal
-    mass_orthogonalize!(v, M)
     # Sort  the angular frequencies by magnitude.  Make sure all imaginary parts
     # of the eigenvalues are removed.
     ix = sortperm(d)
-    return d[ix[1:nev]], v[:, ix[1:nev]], history.nconverged
+    d, v = d[ix[1:nev]], real.(v[:, ix[1:nev]])
+    v = si.A_factorization.PtL'\v
+    # Make vectors mass orthogonal
+    mass_orthogonalize!(v, M)
+    return d, v, history.nconverged
 end
 
 function __krylovkit_eigs(
@@ -169,7 +165,7 @@ function __krylovkit_eigs(
     d = 1 ./ real.(di)
     # Convert a vector of vectors to a matrix
     v = zeros(size(K, 1), length(d))
-    for j in 1:length(vv)
+    for j in eachindex(vv)
         v[:, j] .= real.(vv[j])
     end
     mass_orthogonalize!(v, M)
