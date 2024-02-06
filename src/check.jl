@@ -6,10 +6,12 @@ Check the mass-orthogonality of the eigenvectors.
 # Returns
 
 - `max_vMv_diag_error`, `max_vMv_offdiag_error`, `max_diag_ij`, `max_i`,
-  `max_j`: absolute deviations of the diagonal entries of the reduced mass
-  matrix from unity, absolute deviations of the off-diagonal entries of the
+  `max_j`, `Mred`: absolute deviations of the diagonal entries of the reduced
+  mass matrix from unity, absolute deviations of the off-diagonal entries of the
   reduced mass matrix from zero, and the row/column diagonal index, the row and
-  column index of the off-diagonal entry with the largest error.
+  column index of the off-diagonal entry with the largest error. The last output
+  argument is the reduced matrix itself (which in this case is expected to be
+  identity).
 """
 function check_M_orthogonality(v, M)
     max_vMv_diag_error = 0.0
@@ -41,11 +43,13 @@ Check the stiffness-orthogonality of the eigenvectors.
 # Returns
 
 - `max_vKv_diag_error`, `max_vKv_offdiag_error`, `max_diag_ij`, `max_i`,
-  `max_j`: absolute deviations of the diagonal entries of the reduced stiffness
+  `max_j`, `Kred`: absolute deviations of the diagonal entries of the reduced stiffness
   matrix from the eigenvalue squared, absolute deviations of the off-diagonal
   entries of the reduced mass matrix from zero, and the row/column diagonal
   index, the row and column index of the off-diagonal entry with the largest
-  error.
+  error. The last output argument is the reduced matrix itself. In this case it
+  is expected to be a diagonal matrix with the numbers `d` (squared angular
+  frequencies) on the diagonal.
 
 """
 function check_K_orthogonality(d, v, K)
