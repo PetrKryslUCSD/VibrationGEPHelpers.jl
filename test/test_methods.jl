@@ -78,9 +78,15 @@ let
                 @show norm(fs1 - fs[1:length(fs1)]) / norm(fs), frequency_tol
 
                 r = check_K_orthogonality(d, v, K)
-                @show r, max(10000 * eps(1.0), orthogonality_tol * max(maximum(d), 1.0))
+                @show r[1:2], max(10000 * eps(1.0), orthogonality_tol * max(maximum(d), 1.0)), r[3:5]
+                rm = r[6]
+                rm[abs.(rm) .< 1.0e-6] .= 0
+                @show rm
                 r = check_M_orthogonality(v, M)
-                @show r, orthogonality_tol
+                @show r[1:2], orthogonality_tol, r[3:5]
+                rm = r[6]
+                rm[abs.(rm) .< 1.0e-6] .= 0
+                @show rm
             end
         end
     end

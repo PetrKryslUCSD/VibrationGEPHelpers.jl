@@ -30,7 +30,7 @@ function check_M_orthogonality(v, M)
             end
         end
     end
-    return max_vMv_diag_error, max_vMv_offdiag_error, max_diag_ij, max_i, max_j
+    return max_vMv_diag_error, max_vMv_offdiag_error, max_diag_ij, max_i, max_j, Mred
 end
 
 """
@@ -67,5 +67,5 @@ function check_K_orthogonality(d, v, K)
             end
         end
     end
-    return max_vKv_diag_error, max_vKv_offdiag_error, max_diag_ij, max_i, max_j
+    return max_vKv_diag_error, max_vKv_offdiag_error, max_diag_ij, max_i, max_j, Kred
 end
