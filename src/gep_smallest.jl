@@ -111,7 +111,6 @@ function __arnoldimethod_eigs(
     maxiter::Integer = 300,
     v0::Vector = zeros(eltype(K), (0,)),
 )
-    tol = (tol == 0 ? sqrt(eps(1.0)) : tol)
     si = ShiftAndInvert(cholesky(K), M, Vector{eltype(K)}(undef, size(K, 1)), Vector{eltype(K)}(undef, size(K, 1)))
     m = LinearMap{eltype(K)}(si, size(K, 1), ismutating = true)
     decomp, history = partialschur(
@@ -125,9 +124,11 @@ function __arnoldimethod_eigs(
         maxdim = min(max(40, 2 * nev), size(K,1))
     )
     @show history
-    d_inv, v = partialeigen(decomp)
+    # d_inv, v = partialeigen(decomp)
     # Recover the solution of the original problem
-    d = 1 ./ real.(d_inv)
+    # d = 1 ./ real.(d_inv)
+    d = 1 ./ diag(deepcopy(decomp.R))
+    v = deepcopy(decomp.Q)
     # Sort  the angular frequencies by magnitude.  Make sure all imaginary parts
     # of the eigenvalues are removed.
     ix = sortperm(d)
