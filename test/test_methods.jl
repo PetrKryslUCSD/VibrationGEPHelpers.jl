@@ -3,7 +3,7 @@ let
 
     omega_shift = 2 * pi * 0.1
 
-    for m in [:KrylovKit, :Arpack, :SubSIt]#
+    for m in [:ArnoldiMethod, :KrylovKit, :Arpack, :SubSIt]#
         @info "Method $(m)"
 
 
@@ -48,7 +48,7 @@ let
 
     omega_shift = 2 * pi * 0.1
 
-    for m in [:ArnoldiMethod,  ]#
+    for m in []#
         @info "Method $(m)"
 
 
