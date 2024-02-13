@@ -1,7 +1,7 @@
 name = "VibrationGEPHelpers"
 uuid = "3f428ce3-b273-4d47-9ed2-092cb711fea6"
 authors = ["Petr Krysl <pkrysl@ucsd.edu>"]
-version = "0.1.6"
+version = "0.1.7"
 
 [deps]
 ArnoldiMethod = "ec485272-7323-5ecc-a04f-4719b315124d"
@@ -13,12 +13,12 @@ SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 SubSIt = "f42569b2-8c12-4cce-ba3b-39ee24d84962"
 
-
 [compat]
 Arpack = "=0.5.3"
 KrylovKit = "^0.6"
-LinearMaps = "^3.11"
-SubSIt = "^1.1"
+ArnoldiMethod = "^0.3"
 LinearAlgebra = "^1.10"
+LinearMaps = "^3.11"
 Statistics = "^1.10"
+SubSIt = "^1.1"
 julia = "^1.10"
