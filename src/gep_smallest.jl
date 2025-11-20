@@ -118,7 +118,7 @@ function __arnoldimethod_eigs(
         nev = nev,
         tol = tol,
         restarts = maxiter,
-        which = LM(),
+        which = ArnoldiMethod.LM(),
         mindim  = nev + 6,
         # maxdim = max(nev + 8, 2 * nev, 40)
         maxdim = min(max(40, 2 * nev), size(K,1))
